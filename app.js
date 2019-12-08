@@ -4,9 +4,9 @@ const graphqlHttp=require('express-graphql');
 const { buildSchema } = require('graphql');
 const mongoose = require('mongoose');
 
-const app=express();
+const Event = require('./models/event');
 
-const events=[];
+const app=express();
 
 app.use(bodyParser.json());
 
@@ -24,6 +24,7 @@ app.use('/graphql', graphqlHttp({
             title: String!
             description: String!
             price: Float!
+            date: String!
         }
 
         type RootQuery {
@@ -42,29 +43,45 @@ app.use('/graphql', graphqlHttp({
     rootValue: {
         // resolvers, nothing but a function
         events: function(){
-            return events;
+            return Event
+            .find()
+            .exec()
+            .then(function(events){
+                return events.map(function(event){
+                    return {...event._doc, _id: event._id };
+                });
+            }).catch(function(err){
+                throw err;
+            });
         },
         createEvent: function(args){
-            const event= {
-                _id: Math.random().toString(),
+            const event=new Event({
                 title: args.eventInput.title,
                 description: args.eventInput.description,
                 price: +args.eventInput.price,
-                date: new Date().toISOString()
-            };
-            console.log(event);
-            events.push(event);
-            return event;
+                date: new Date(args.eventInput.date)
+            });
+            return event.save()
+            .then(function(result){
+                console.log("result: "+result);
+                return {...result._doc, id: result._doc._id.toString() };
+            }).catch(function(err){
+                console.log("error: "+err);
+                throw err;
+            });
         }
     },
     graphiql: true
 }));
-
-mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${
-    process.env.MONGO_PASSWORD
-}@cluster0-vbk75.mongodb.net/test?retryWrites=true&w=majority`
-).then(function(){
+mongoose.connect('mongodb+srv://'+
+    process.env.MONGO_USER+':'+
+    process.env.MONGO_PASSWORD+
+    '@cluster0-vbk75.mongodb.net/'+
+    process.env.MONGO_DB+
+    '?retryWrites=true&w=majority')
+.then(function(){
     app.listen(3000);
 }).catch(function(err){
-    console.log(err);
+    console.log("error :" + err);
+    throw err;
 });
