@@ -3,9 +3,9 @@ const bcrypt = require('bcryptjs');
 const Event = require('../../models/event');
 const User = require('../../models/user');
 
-const events = function(eventIds){ 
-    return Event.find({_id: {$in: eventIds} })
-    .then(function(events){
+const events = async function(eventIds){ 
+    events = await Event.find({_id: {$in: eventIds} });
+    try{
         return events.map(function(event){
             return {
                 ...event._doc,
@@ -14,32 +14,29 @@ const events = function(eventIds){
                 creator: user.bind(this, event._doc.creator)
             }
         });
-    })
-    .catch(function(err){
+    } catch(err){
         throw err;
-    });
+    }
 }
 
-const user = function(userId){
-    return User.findById(userId)
-    .then(function(res){
+const user = async function(userId){
+    try{
+        const res = await User.findById(userId)
         return {
             ...res._doc,
             _id: res.id,
             createdEvents: events.bind(this, res._doc.createdEvents)
         };
-    }).catch(function(err){
-        throw err;
-    });
+    } catch(err) {
+        console.log(err);
+    }
 };
 
 module.exports = {
     // resolvers, nothing but a function
-    events: function(){
-        return Event
-        .find()
-        .exec()
-        .then(function(events){
+    events: async function(){
+        try{
+            const events = await Event.find();
             return events.map(function(event){
                 return {
                     ...event._doc,
@@ -48,11 +45,11 @@ module.exports = {
                     creator: user.bind(this, event._doc.creator)
                 };
             });
-        }).catch(function(err){
+        } catch(err) {
             throw err;
-        });
+        };
     },
-    createEvent: function(args){
+    createEvent: async function(args){
         const event=new Event({
             title: args.eventInput.title,
             description: args.eventInput.description,
@@ -61,8 +58,8 @@ module.exports = {
             creator: '5dedbf71fd7fe22174e90325'
         });
         let createdEvent;
-        return event.save()
-        .then(function(result){
+        try{
+            const result = await event.save();
             console.log("result: "+result);
             createdEvent={
                 ...result._doc,
@@ -70,44 +67,35 @@ module.exports = {
                 date: new Date(event._doc.date).toISOString(),
                 creator: user.bind(this, result._doc.creator)
             };
-            return User.findById('5dedbf71fd7fe22174e90325');
-        })
-        .then(function(user){
-            if(!user){
+            const userResult = await User.findById('5dedbf71fd7fe22174e90325');        
+            if(!userResult){
                 throw new Error('User not found');
             }
-            user.createdEvents.push(event);
-            return user.save();
-        })
-        .then(function(result){
+            userResult.createdEvents.push(event);
+            await userResult.save();
             return createdEvent;
-        })
-        .catch(function(err){
+        } catch(err){
             console.log("error: "+err);
             throw err;
-        });
+        };
     },
-    createUser: function(args){
-        return User.findOne({email: args.userInput.email}).then(function(user){
-            if(user){
+    createUser: async function(args){
+        try{
+            const existingUser = await User.findOne({email: args.userInput.email})
+            if(existingUser){
                 throw new Error('User already exists.');
             }
-            return bcrypt.hash(args.userInput.password, 12);
-        })
-        .then(function(hashedPassword){
+            const hashedPassword = await bcrypt.hash(args.userInput.password, 12);
             const user=new User({
                 email: args.userInput.email,
                 password: hashedPassword
             });
-            return user.save();
-        })
-        .then(function(result){
+            const result = await user.save();
             console.log("result: " + result);
             return {...result._doc, password: null, _id: result._doc._id.toString() };
-        })
-        .catch(function(err){
+        } catch(err){
             console.log("error: "+err);
             throw err;
-        });
+        };
     }
 }
