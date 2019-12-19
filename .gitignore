@@ -1,5 +1,5 @@
 #npm config files
-/node_modules
+node_modules/
 
 #distribution files
 /dist
