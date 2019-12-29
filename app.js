@@ -26,7 +26,7 @@ mongoose.connect('mongodb+srv://'+
     process.env.MONGO_DB+
     '?retryWrites=true&w=majority')
 .then(function(){
-    app.listen(3000);
+    app.listen(8000);
 }).catch(function(err){
     console.log("error :" + err);
     throw err;
