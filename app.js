@@ -11,13 +11,24 @@ const isAuth = require('./middleware/is-auth');
 const app=express();
 
 app.use(bodyParser.json());
+
+app.use(function(req, res, next){
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if(req.method === 'OPTIONS'){
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(morgan('dev'));
 app.use(isAuth);
 
 app.use('/graphql', graphqlHttp({
     schema: graphQlSchema,
     rootValue: graphQlResolvers,
-    graphiql: true
+    //graphiql: true
 }));
 mongoose.connect('mongodb+srv://'+
     process.env.MONGO_USER+':'+
@@ -27,6 +38,7 @@ mongoose.connect('mongodb+srv://'+
     '?retryWrites=true&w=majority')
 .then(function(){
     app.listen(8000);
+    console.log('backend-server started on port 8000');
 }).catch(function(err){
     console.log("error :" + err);
     throw err;
