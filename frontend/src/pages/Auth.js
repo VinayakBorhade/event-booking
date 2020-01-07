@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 
 import './Auth.css';
+import AuthContext from '../context/auth-context';
 
 class AuthPage extends Component {
 
@@ -8,29 +9,29 @@ class AuthPage extends Component {
         isLogin: true
     };
 
+    static contextType = AuthContext;
+    
     constructor(props){
         super(props);
         this.emailEl=React.createRef();
         this.passwordEl=React.createRef();
         console.log("in constructor: ", this);
-    }
+    };
 
     switchModeHandler = () => {
         this.setState(function(prevState){
             return {isLogin: !prevState.isLogin };
         });
-    }
+    };
 
     submitHandler = (event) => {
         event.preventDefault();
         console.log("in submitHandler: ", this);
         const email=this.emailEl.current.value;
         const password=this.passwordEl.current.value;
-        
         if(email.trim().length===0 || password.trim().length===0){
             return;
         }
-
         let requestBody = {
             query: `
                 query{
@@ -42,7 +43,6 @@ class AuthPage extends Component {
                 }
             `
         };
-
         if(!this.state.isLogin){
             requestBody = {
                 query: `
@@ -55,7 +55,7 @@ class AuthPage extends Component {
                 `
             };
         }
-
+        var thisObj=this;
         fetch('http://localhost:8000/graphql', {
             method: 'POST',
             body: JSON.stringify(requestBody),
@@ -66,15 +66,24 @@ class AuthPage extends Component {
             if(!(res.status == 200 || res.status == 201)){
                 throw new Error(res.status);
             }
+            console.log("inside, fetch callack, this, ", this, " \n res: ", res);
             return res.json();
         }).then(function(resData){
-            console.log(resData);
+            // console.log("this: ", this);
+            if(resData.data.login.token){
+                thisObj.context.login(
+                    resData.data.login.token,
+                    resData.data.login.userId,
+                    resData.data.login.tokenExpiration,
+                );
+            }
         }).catch(function(err){
             console.log("fetch error: ", err);
         });
-    }
+    };
 
     render() {
+        console.log("inside return(), this: ", this);
         return (
             <form className="auth-form" onSubmit={this.submitHandler}>
                 <div className="form-control">
@@ -93,7 +102,7 @@ class AuthPage extends Component {
                 </div>
             </form>
         );
-    }
-}
+    };
+};
 
 export default AuthPage;
