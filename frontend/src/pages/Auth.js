@@ -55,7 +55,7 @@ class AuthPage extends Component {
                 `
             };
         }
-        var thisObj=this;
+        const thisObj=this;
         fetch('http://localhost:8000/graphql', {
             method: 'POST',
             body: JSON.stringify(requestBody),
@@ -83,7 +83,7 @@ class AuthPage extends Component {
     };
 
     render() {
-        console.log("inside return(), this: ", this);
+        
         return (
             <form className="auth-form" onSubmit={this.submitHandler}>
                 <div className="form-control">
