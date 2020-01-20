@@ -13,7 +13,7 @@ const eventItem = function(props){
                 
                 { props.userId==props.creatorId ? (
                     <p>You are owner</p>
-                ) : (<button className="btn" >View Details</button>) }
+                ) : (<button className="btn" onClick={props.onDetail.bind(this, props.eventId)} >View Details</button>) }
             </div>
         </li>
     );
