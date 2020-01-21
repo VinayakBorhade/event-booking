@@ -28,6 +28,12 @@ module.exports = {
                 const err =new Error('No such event exists');
                 throw err;
             }
+            const fetchedBooking = await Booking.find({event: args.eventId});
+            console.log('fetchedBooking: ', fetchedBooking);
+            if(fetchedBooking.length>0){
+                const err =new Error('Booking for this event already exists');
+                throw err;
+            }
             const booking = new Booking({
                 user: req.userId,
                 event: fetchedEvent
