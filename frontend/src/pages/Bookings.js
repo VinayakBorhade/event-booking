@@ -2,13 +2,16 @@ import React, { Component } from 'react';
 import AuthContext from '../context/auth-context';
 
 import Spinner from '../components/Spinner/Spinner';
-import BookingsList from '../components/Bookings/BookingList/BookingList';
+import BookingList from '../components/Bookings/BookingList/BookingList';
+import BookingChart from '../components/Bookings/BookingChart/BookingChart';
+import BookingControls from '../components/Bookings/BookingsControls/BookingsControls';
 
 class BookingsPage extends Component {
 
     state={
         isLoading: false,
-        bookings: []
+        bookings: [],
+        outputType: 'list'
     };
 
     static contextType=AuthContext;
@@ -30,6 +33,7 @@ class BookingsPage extends Component {
                     event {
                         _id
                         title
+                        price
                         date
                     }
                   }
@@ -101,14 +105,33 @@ class BookingsPage extends Component {
         });
     };
 
+    changeOutputTypeHandler = (outputType) => {
+        if(outputType==='list'){
+            this.setState({outputType: 'list'});
+        }
+        else{
+            this.setState({outputType: 'chart'});
+        }
+    };
+
     render() {
-        return (
-            <React.Fragment>
-            {this.state.isLoading ? (<Spinner />) : (
-                <BookingsList bookings={this.state.bookings} onDelete={this.deleteBookingHandler} />
-            )}
-            </React.Fragment>
-        );
+        let content=<Spinner />;
+        if(!this.state.isLoading){
+            content=(
+                <React.Fragment>
+                    <BookingControls 
+                        activeOutputType={this.state.outputType} 
+                        onChange={this.changeOutputTypeHandler} 
+                    />
+                    <div>
+                        {this.state.outputType=='list' ? 
+                        (<BookingList bookings={this.state.bookings} onDelete={this.deleteBookingHandler}/>) 
+                        : (<BookingChart bookings={this.state.bookings} />) }
+                    </div>
+                </React.Fragment>
+            );
+        }
+        return content;
     };
 }
 
